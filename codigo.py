@@ -31,16 +31,29 @@ df_split.dropna(inplace=True)
 
 df_split['sintomas_tratados'] = df_split['Sintomas'].apply(tratamento_dados)
 
-def recomenda_doenca(descricao_usuario, df_base):
+def recomenda_top_doencas(descricao_usuario, df_base, top_n=3):
     consulta_tratada = tratamento_dados(descricao_usuario)
     corpus = df_base['sintomas_tratados'].tolist() + [consulta_tratada]
     tfidf = TfidfVectorizer()
     tfidf_matriz = tfidf.fit_transform(corpus)
-    cosine_sim = cosine_similarity(tfidf_matriz[-1], tfidf_matriz[:-1])
-    indice_mais_proximo = np.argmax(cosine_sim)
-    doenca_recomendada = df_base['Doenca'].iloc[indice_mais_proximo]
-    similaridade = cosine_sim[0, indice_mais_proximo] * 100  # porcentagem
-    return doenca_recomendada, similaridade
+    cosine_sim = cosine_similarity(tfidf_matriz[-1], tfidf_matriz[:-1]).flatten()
+
+    resultados_temp = []
+    for idx, score in enumerate(cosine_sim):
+        doenca = df_base.iloc[idx]['Doenca']
+        resultados_temp.append((doenca, score))
+
+    resultados_dict = {}
+    for doenca, score in resultados_temp:
+        if doenca not in resultados_dict or score > resultados_dict[doenca]:
+            resultados_dict[doenca] = score
+
+    resultados_ordenados = sorted(resultados_dict.items(), key=lambda x: x[1], reverse=True)
+
+    resultados_finais = [(doenca, sim * 100) for doenca, sim in resultados_ordenados[:top_n]]
+    return resultados_finais
+
+
 
 
 def botao_recomenda():
@@ -48,11 +61,9 @@ def botao_recomenda():
     if not descricao.strip():
         messagebox.showwarning("Erro", "Por favor, insira os sintomas.")
         return
-    doenca, similaridade = recomenda_doenca(descricao, df_split)
-    messagebox.showinfo(
-        "Diagnóstico Possível",
-        f"Doença recomendada: {doenca}\nSimilaridade: {similaridade:.2f}%"
-    )
+    resultados = recomenda_top_doencas(descricao, df_split, top_n=3)
+    texto_resultado = "\n".join([f"{doenca}: {sim:.2f}%" for doenca, sim in resultados])
+    messagebox.showinfo("Diagnóstico Possível", f"Doenças mais prováveis:\n\n{texto_resultado}")
 
 
 root = tk.Tk()
