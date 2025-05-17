@@ -1,3 +1,4 @@
+
 import pandas as pd
 import numpy as np
 import string
@@ -9,13 +10,10 @@ from sklearn.metrics.pairwise import cosine_similarity
 import tkinter as tk
 from tkinter import messagebox
 
-# Baixando recursos necessários
 nltk.download('stopwords')
 
-# Inicializando tokenizador
 tokenizer = ToktokTokenizer()
 
-# Função para limpar e tratar os dados de texto
 def tratamento_dados(texto):
     texto = str(texto).lower()
     texto = texto.translate(str.maketrans('', '', string.punctuation))
@@ -24,19 +22,15 @@ def tratamento_dados(texto):
     tokens = [palavra for palavra in tokens if palavra not in stop_words]
     return ' '.join(tokens)
 
-# Lendo o arquivo CSV (ajuste o nome se necessário)
-arquivo = 'Symptom2Disease_translated5.csv'
+arquivo = 'Symptom2Disease_translated.csv'
 df = pd.read_csv(arquivo, on_bad_lines='skip')
 
-# Extraindo colunas a partir de texto no campo 'Unnamed: 0'
 df_split = df['Unnamed: 0'].str.extract(r'(\d+),\s*([^,]+),\s*"(.*)"')
 df_split.columns = ['ID', 'Doenca', 'Sintomas']
 df_split.dropna(inplace=True)
 
-# Aplicando pré-processamento nos sintomas
 df_split['sintomas_tratados'] = df_split['Sintomas'].apply(tratamento_dados)
 
-# Função de recomendação com base na descrição do usuário
 def recomenda_doenca(descricao_usuario, df_base):
     consulta_tratada = tratamento_dados(descricao_usuario)
     corpus = df_base['sintomas_tratados'].tolist() + [consulta_tratada]
@@ -49,7 +43,6 @@ def recomenda_doenca(descricao_usuario, df_base):
     return doenca_recomendada, similaridade
 
 
-# Interface gráfica (GUI) com Tkinter
 def botao_recomenda():
     descricao = entry.get()
     if not descricao.strip():
@@ -62,7 +55,6 @@ def botao_recomenda():
     )
 
 
-# Construção da janela Tkinter
 root = tk.Tk()
 root.title("Sistema de Diagnóstico por Sintomas")
 root.geometry('500x220')
