@@ -1,6 +1,3 @@
-# Instale as bibliotecas necessárias, se ainda não tiver:
-# pip install pandas numpy scikit-learn nltk
-
 import pandas as pd
 import numpy as np
 import string
